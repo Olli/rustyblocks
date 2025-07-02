@@ -1,0 +1,11 @@
+[package]
+name = "rustyblocks"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+"xcb" = "1.5.0"
+"signal-hook" = "0.3.4"
+"subprocess" = "0.2.9"
+[features]
+libc_const_extern_fn = []

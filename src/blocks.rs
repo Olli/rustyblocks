@@ -1,5 +1,3 @@
-//use super::Block;
-
 #[derive(Debug)]
 pub struct Block<'a> {
     pub icon: &'a str,
@@ -42,7 +40,5 @@ pub const BLOCKS: &[Block] = &[
     },
 ];
 
-// sets delimiter between status commands. NULL character ('\0') means no
-// delimiter.
+// sets delimiter between status commands.
 pub const SEPARATOR: &str = " | ";
-pub const SEPARATOR_LEN: u8 = 5;

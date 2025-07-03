@@ -110,8 +110,6 @@ fn writestatus(x_attributes: &DSR, cmd_results: Vec<String>, status_line: &mut S
         let root_window = x_attributes.root_window;
         let title_str = status_line.actual_status.clone();
 
-        println!("{}", title_str);
-
         let cookie = x_attributes.conn.send_request_checked(&x::ChangeProperty {
             mode: x::PropMode::Replace,
             window: root_window,
@@ -124,7 +122,6 @@ fn writestatus(x_attributes: &DSR, cmd_results: Vec<String>, status_line: &mut S
 }
 
 fn getstatus(cmd_results: Vec<String>, status_line: &mut StatusLine) -> bool {
-    // println!("first_last: {}\n", status_line.actual_status);
     status_line.last_status = status_line.actual_status.to_string().clone();
     // reset actual status so nothing adds up
     status_line.actual_status = String::new();

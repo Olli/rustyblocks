@@ -119,7 +119,6 @@ fn writestatus(x_attributes: &DSR, cmd_results: Vec<String>, status_line: &mut S
             r#type: x::ATOM_STRING,
             data: &title_str.as_bytes(),
         });
-        //x_attributes.conn.check_request(cookie)
         x_attributes.conn.flush();
     }
 }
@@ -135,12 +134,6 @@ fn getstatus(cmd_results: Vec<String>, status_line: &mut StatusLine) -> bool {
     status_line
         .actual_status
         .truncate(status_line.actual_status.len() - SEPARATOR.len());
-    // compare both strings
-    // println!(
-    //     "actual: {} \n last: {}",
-    //     status_line.actual_status, status_line.last_status
-    // );
-    //
     status_line.not_equal()
 }
 

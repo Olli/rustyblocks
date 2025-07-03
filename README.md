@@ -17,7 +17,7 @@ Install the whole rust toolchain in your distro (you should know how to do that)
 After that just clone the respository and run
 
 ```
-cargo build
+cargo build -r
 ```
 
 Put the binary into ~/.local/bin and add ~/.local/bin to your PATH variable of your favourite shell (the same

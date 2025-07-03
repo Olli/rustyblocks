@@ -10,6 +10,7 @@ use std::{
 use subprocess::{CaptureData, Exec, ExitStatus, Popen, PopenError, Redirection};
 mod blocks;
 use signal_hook::flag;
+mod threads;
 
 // DSR = Display Screen Root
 struct DSR {

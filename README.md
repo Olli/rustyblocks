@@ -3,6 +3,8 @@
 ## What is Rustyblocks?
 
 Rustblocks is basically the try to reimplement dwmblocks with Rust.
+![2025-07-03_11-07](https://github.com/user-attachments/assets/b94cf597-98f3-4c17-99dd-a4a8f79a4139)
+
 
 ## But why?
 

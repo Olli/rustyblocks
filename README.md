@@ -24,6 +24,12 @@ Put the binary into ~/.local/bin and add ~/.local/bin to your PATH variable of y
 here you should know how to do that otherwise go to Youtube and watch some of this excellent Linux introduction
 videos)
 
+## How to configure?
+
+It's basically the same way you do it with dwmblocks. In src/blocks.rs is your block config and you can add commands which are executed
+periodically.
+Just don't forget to rerun cargo build -r and copy the binary from target to .local/bin or where you like it to be.
+
 ## Can I contribute?
 
 Yes off course ... just open a pull request but at the end this program should stay simple.

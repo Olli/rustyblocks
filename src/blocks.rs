@@ -2,12 +2,18 @@
 pub struct Block<'a> {
     pub icon: &'a str,
     pub command: &'a str,
-    pub interval: u8,
+    pub interval: u32,
     pub signal: u8,
 }
 
 pub const BLOCKS: &[Block] = &[
     /*Icon*/ /*Command*/ /*Update Interval*/ /*Update Signal*/
+    Block {
+        icon: "",
+        command: "curl wttr.in/berlin?format=4",
+        interval: 3600,
+        signal: 0,
+    },
     Block {
         icon: "",
         command: "setxkbmap -query | awk '/^layout:/ { print  $2 }'",

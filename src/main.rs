@@ -3,14 +3,16 @@ use xcb::{Xid, x};
 
 use std::{
     io::Error,
+    rc::{Rc, Weak},
     sync::Arc,
+    sync::Mutex,
     sync::atomic::{AtomicBool, Ordering},
     thread, time,
 };
 use subprocess::{CaptureData, Exec, ExitStatus, Popen, PopenError, Redirection};
 mod blocks;
 use signal_hook::flag;
-mod threads;
+//mod threads;
 
 // DSR = Display Screen Root
 struct DSR {
@@ -60,7 +62,7 @@ impl StatusLine {
 fn getcmd(block: &blocks::Block) -> String {
     let mut tmpstatus: String = String::new();
     tmpstatus.push_str(block.icon);
-    let cmd_output: Result<CaptureData, PopenError> = Exec::shell(&block.command)
+    let cmd_output: Result<CaptureData, PopenError> = Exec::shell(block.command)
         .stdout(Redirection::Pipe)
         .stderr(Redirection::Pipe)
         .capture();
@@ -68,11 +70,6 @@ fn getcmd(block: &blocks::Block) -> String {
         Ok(output) => {
             let mut result = output.stdout_str();
             result = result.trim().to_string();
-            // we need to check if the const is empty because of
-            // SEPARATOR is part of the configuration → this is intentional
-            if !SEPARATOR.is_empty() {
-                result += SEPARATOR;
-            }
             tmpstatus.push_str(result.as_str());
         }
         Err(error) => {
@@ -84,29 +81,54 @@ fn getcmd(block: &blocks::Block) -> String {
 }
 fn dummy_sig_handler() {}
 
-fn getcmds() -> Vec<String> {
-    let mut results: Vec<String> = vec![];
-    for block in blocks::BLOCKS {
-        results.push(getcmd(block));
+fn getcmds(counter: u128, cmd_results: &mut Vec<String>) {
+    let blocks_size = blocks::BLOCKS.len();
+    let results = Arc::new(Mutex::new(vec![String::new(); blocks_size]));
+
+    let mut handles = vec![];
+    for i in 0..blocks_size {
+        let results_clone = Arc::clone(&results);
+        // only run the command if it's time for it
+        if (blocks::BLOCKS[i].interval != 0) && (counter % blocks::BLOCKS[i].interval as u128 == 0)
+        {
+            let handle = thread::spawn(move || {
+                let mut result = results_clone.lock().unwrap();
+                result[i] = getcmd(&blocks::BLOCKS[i])
+            });
+            handles.push(handle);
+        }
     }
-    results
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+    for idx in 0..blocks_size {
+        let resultarray = results.lock().unwrap();
+        if !resultarray[idx].is_empty() && resultarray[idx] != cmd_results[idx] {
+            println!("rewrite: {}", resultarray[idx].clone());
+            cmd_results[idx] = resultarray[idx].clone();
+        }
+    }
 }
 
 fn status_loop(x_attributes: DSR, sig_term: Arc<AtomicBool>) {
-    // external update signals turned of for now
-    // setup_signals();
     let duration = time::Duration::from_millis(1000);
     let mut status_line = StatusLine::new();
-    getcmds();
+    let mut times: u128 = 0;
+    let mut cmd_results: Vec<String> = vec![String::new(); blocks::BLOCKS.len()];
+
     // loops as long as no signal has been given
     while !sig_term.load(Ordering::Relaxed) {
-        let cmd_results = getcmds();
-        writestatus(&x_attributes, cmd_results, &mut status_line);
+        getcmds(times, &mut cmd_results);
+        writestatus(&x_attributes, &mut cmd_results, &mut status_line);
         thread::sleep(duration);
+        times += 1;
     }
 }
 
-fn writestatus(x_attributes: &DSR, cmd_results: Vec<String>, status_line: &mut StatusLine) {
+// write status to root window
+fn writestatus(x_attributes: &DSR, cmd_results: &mut Vec<String>, status_line: &mut StatusLine) {
+    // only if actually something differs
     if getstatus(cmd_results, status_line) {
         let root_window = x_attributes.root_window;
         let title_str = status_line.actual_status.clone();
@@ -118,25 +140,32 @@ fn writestatus(x_attributes: &DSR, cmd_results: Vec<String>, status_line: &mut S
             r#type: x::ATOM_STRING,
             data: &title_str.as_bytes(),
         });
-        x_attributes.conn.flush();
+        let _ = x_attributes.conn.flush();
     }
 }
 
-fn getstatus(cmd_results: Vec<String>, status_line: &mut StatusLine) -> bool {
+// create status_line and return true if actual and laste are not equal
+fn getstatus(cmd_results: &mut Vec<String>, status_line: &mut StatusLine) -> bool {
     status_line.last_status = status_line.actual_status.to_string().clone();
     // reset actual status so nothing adds up
     status_line.actual_status = String::new();
-    for cmd_result in cmd_results.iter() {
-        status_line.actual_status.push_str(cmd_result)
+    for cmd_result in &mut cmd_results.clone().iter() {
+        // we need to check if the const is empty because of
+        // SEPARATOR is part of the configuration → this is intentional
+        let mut local_result = cmd_result.clone();
+        if !SEPARATOR.is_empty() {
+            local_result.push_str(SEPARATOR);
+        }
+
+        status_line.actual_status.push_str(&local_result)
     }
     status_line
         .actual_status
-        .truncate(status_line.actual_status.len() - SEPARATOR.len());
+        // .truncate(status_line.actual_status.len() - SEPARATOR.len());
+        .truncate(status_line.actual_status.len());
+
     status_line.not_equal()
 }
-
-// this should somehow stop the main loop
-fn sig_term() {}
 
 fn main() -> Result<(), Error> {
     let x_attributes = DSR::new().unwrap();

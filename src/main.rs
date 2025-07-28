@@ -105,7 +105,6 @@ fn getcmds(counter: u128, cmd_results: &mut Vec<String>) {
     for idx in 0..blocks_size {
         let resultarray = results.lock().unwrap();
         if !resultarray[idx].is_empty() && resultarray[idx] != cmd_results[idx] {
-            println!("rewrite: {}", resultarray[idx].clone());
             cmd_results[idx] = resultarray[idx].clone();
         }
     }

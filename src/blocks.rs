@@ -10,7 +10,7 @@ pub const BLOCKS: &[Block] = &[
     /*Icon*/ /*Command*/ /*Update Interval*/ /*Update Signal*/
     Block {
         icon: "",
-        command: "curl wttr.in/berlin?format=4",
+        command: "curl wttr.in/berlin?format=4 | sed 's/\\xef\\xb8\\x8f//g' ",
         interval: 3600,
         signal: 0,
     },
